@@ -35,3 +35,40 @@ SELECT
 	,a.mx = b.mx
 FROM a 
 INNER JOIN b ON a.rn = b.rn;
+
+А нужно ли нам учитывать именно уникальны менеджеров для корректного расчета?
+Задание звучит так
+"Найдите топ-3 заведения, где чаще всего менялся менеджер за весь период."
+Я его понял как уникальный count(manager_uuid)
+Но можно проверить и не уникальных.
+WITH cnt as(
+SELECT
+	restaurant_uuid
+	,count(manager_uuid) AS count -- уникальные менеджеры
+	,RANK() OVER(ORDER BY count(manager_uuid) DESC) AS rank
+FROM cafe.restaurant_manager_work_dates
+GROUP BY 1
+ORDER BY 2 DESC)
+SELECT 
+	res.restaurant_name
+	,cnt.count
+FROM cafe.restaurants AS res
+JOIN cnt ON cnt.restaurant_uuid = res.restaurant_uuid
+WHERE cnt.RANK <= 3;
+
+WITH cnt as(
+SELECT
+	restaurant_uuid
+	,count(*) AS count -- не уникальные менеджеры
+	,RANK() OVER(ORDER BY count(manager_uuid) DESC) AS rank
+FROM cafe.restaurant_manager_work_dates
+GROUP BY 1
+ORDER BY 2 DESC)
+SELECT 
+	res.restaurant_name
+	,cnt.count
+FROM cafe.restaurants AS res
+JOIN cnt ON cnt.restaurant_uuid = res.restaurant_uuid
+WHERE cnt.RANK <= 3;
+
+результат одинкаковый у двух запросов. Так что кажется без разницы.
