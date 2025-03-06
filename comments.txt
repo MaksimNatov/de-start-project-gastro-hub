@@ -1,2 +1,37 @@
 /*Добавьте в этот файл комментарии по проекту, которые вы считаете необходимыми, 
 и вопросы ревьюеру*/
+
+INNER JOIN cafe.managers AS m ON m.manager_name = s.manager - Данные не теряются
+Я проверял следующим способом. В первом подзапросе беру данные из raw, во втором из тех таблиц которые заполнил я.
+Сравниваю их кол-во строк 200. Значение везде тру.
+WITH 
+a as(
+SELECT
+	cafe_name
+	,manager
+	,min(report_date) AS mn
+	,max(report_date) AS mx
+	,row_number() OVER (ORDER BY 1,2) AS rn
+FROM raw_data.sales
+GROUP BY 1, 2
+ORDER BY 1, 2),
+b as(
+SELECT
+	
+	r.restaurant_name
+	,m.manager_name
+	,wd.start_date AS mn
+	,wd.end_date AS mx
+	,row_number() OVER (ORDER BY r.restaurant_name, m.manager_name) AS rn
+
+FROM cafe.restaurant_manager_work_dates AS wd
+LEFT JOIN cafe.restaurants r ON r.restaurant_uuid = wd.restaurant_uuid
+LEFT JOIN cafe.managers m ON m.manager_uuid = wd.manager_uuid
+ORDER BY 1,2)
+SELECT 
+	a.cafe_name = b.restaurant_name
+	,a.manager = b.manager_name
+	,a.mn = b.mn
+	,a.mx = b.mx
+FROM a 
+INNER JOIN b ON a.rn = b.rn;
